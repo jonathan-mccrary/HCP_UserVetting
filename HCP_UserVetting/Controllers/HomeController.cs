@@ -68,11 +68,11 @@ namespace HCP_UserVetting.Controllers
             {
                 _dbContext.Users.Add(user);
                 _dbContext.SaveChanges();
-                return Content("PROCEED");
+                return Content("Proceed: User does not exist and has not been vetted yet");
             }
             else if (existingUser.Vetted == false)
             {
-                return Content("PROCEED");
+                return Content("Proceed: User exitsts, but has not been vetted yet");
             }
             else if (existingUser.Passed == true)
             {
@@ -111,18 +111,18 @@ namespace HCP_UserVetting.Controllers
             questionOneA.Options.Add(optionTwo);
             _questions.Add(questionOneA);
 
-            var activeQuestions = _dbContext.Questions.Where(p => p.IsActive == true).OrderBy(p => p.QuestionNumber);
-            foreach (var question in activeQuestions)
-            {
-                if (question.FreeForm == false)
-                {
-                    var options = (from ao in _dbContext.AnswerOptions
-                                   join mqo in _dbContext.QuestionOptions on ao.OptionId equals mqo.OptionId
-                                   where mqo.QuestionId == question.QuestionId
-                                   select ao).ToList();
-                    question.Options = options;
-                }
-            }
+            //var activeQuestions = _dbContext.Questions.Where(p => p.IsActive == true).OrderBy(p => p.QuestionNumber);
+            //foreach (var question in activeQuestions)
+            //{
+            //    if (question.FreeForm == false)
+            //    {
+            //        var options = (from ao in _dbContext.AnswerOptions
+            //                       join mqo in _dbContext.QuestionOptions on ao.OptionId equals mqo.OptionId
+            //                       where mqo.QuestionId == question.QuestionId
+            //                       select ao).ToList();
+            //        question.Options = options;
+            //    }
+            //}
         }
     }
 }

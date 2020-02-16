@@ -11,7 +11,7 @@
 <div id="divIndex">
     @Html.React("VettingBox", new
     {
-        //initialData = Model.User,
+        initialData = Model.User,
         checkUserUrl = Url.Action("CheckUser"),
         questionsUrl = Url.Action("Questions"),
         submitUrl = Url.Action("VetUser"),
