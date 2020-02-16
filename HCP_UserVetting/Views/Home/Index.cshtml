@@ -1,0 +1,22 @@
+﻿@model HCP_UserVetting.Models.VettingModel
+@{
+    Layout = "_Layout";
+}
+<div id="reactScripts">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/16.8.0/umd/react.development.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.0/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.6.0/prop-types.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js"></script>
+</div>
+<div id="divIndex">
+    @Html.React("VettingBox", new
+    {
+        //initialData = Model.User,
+        checkUserUrl = Url.Action("CheckUser"),
+        questionsUrl = Url.Action("Questions"),
+        submitUrl = Url.Action("VetUser"),
+        pollInterval = 2000,
+    })
+    <script src="@Url.Content("~/js/VettingQuestions.jsx")"></script>
+    @Html.ReactInitJavaScript()
+</div>
