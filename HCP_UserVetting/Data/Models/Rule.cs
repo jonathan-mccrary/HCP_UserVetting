@@ -7,7 +7,7 @@ namespace HCP_UserVetting.Data.Models
     {
         private List<RuleCondition> _conditions;
         [Key]
-        public long RoleId { get; set; }
+        public long RuleId { get; set; }
         public string RuleDescription { get; set; }
         public bool IsActive { get; set; }
 

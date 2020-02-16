@@ -1,8 +1,9 @@
-﻿using HCP_UserVetting.Data.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using HCP_UserVetting.Data.Models;
+using HCP_UserVetting.Logic;
 using HCP_UserVetting.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace HCP_UserVetting.Controllers
 {
@@ -14,10 +15,12 @@ namespace HCP_UserVetting.Controllers
         private User _user;
 
         private IList<Question> _questions = new List<Question>();
+        private RulesEngine _rulesEngine;
 
         public HomeController(Data.HCP_DBContext dBContext)
         {
             _dbContext = dBContext;
+            _rulesEngine = new RulesEngine(dBContext);
             /*
              * Note:
              *  Only pass model for User on inital load.

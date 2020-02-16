@@ -21,7 +21,6 @@ namespace HCP_UserVetting.Data
         public DbSet<User> Users { get; set; }
         public DbSet<MAP_Question_Option> QuestionOptions { get; set; }
         public DbSet<MAP_User_Question_Response> QuestionResponses { get; set; }
-        //public DbSet<MAP_WebUser_Question> UserQuestions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
