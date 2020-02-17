@@ -5,8 +5,6 @@ using HCP_UserVetting.Data.Models;
 using HCP_UserVetting.Logic;
 using HCP_UserVetting.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Json;
-using Newtonsoft.Json.Linq;
 
 namespace HCP_UserVetting.Controllers
 {
@@ -22,14 +20,7 @@ namespace HCP_UserVetting.Controllers
         {
             _dbContext = dBContext;
             _rulesEngine = new RulesEngine(dBContext);
-            /*
-             * Note:
-             *  Only pass model for User on inital load.
-             *  Once user is submitted, load questions from database/in memory (like in the Comments() action method)
-             */
-
             _questions = new List<QuestionModel>();
-
             _user = new User();
         }
 
@@ -88,7 +79,8 @@ namespace HCP_UserVetting.Controllers
             }
             catch (Exception ex)
             {
-                throw;
+                Console.WriteLine(ex.Message);
+                throw;//debugging purposes
             }
             return Content("No results because something went wrong.");
         }
@@ -97,30 +89,36 @@ namespace HCP_UserVetting.Controllers
         [HttpPost]
         public ActionResult CheckUser(User user)
         {
-            _user = user;
-            User existingUser = _dbContext.Users.FirstOrDefault(p => p.FirstName == user.FirstName && p.LastName == user.LastName && p.EmailAddress == user.EmailAddress);
+            try
+            {
+                _user = user;
+                User existingUser = _dbContext.Users.FirstOrDefault(p => p.FirstName == user.FirstName && p.LastName == user.LastName && p.EmailAddress == user.EmailAddress);
 
-            if (existingUser == null)
-            {
-                _dbContext.Users.Add(user);
-                _dbContext.SaveChanges();
-                return Content("Proceed: User does not exist and has not been vetted yet.");
+                if (existingUser == null)
+                {
+                    _dbContext.Users.Add(user);
+                    _dbContext.SaveChanges();
+                    return Content("Proceed: User does not exist and has not been vetted yet.");
+                }
+                else if (existingUser.Vetted == false)
+                {
+                    return Content("Proceed: User exitsts, but has not been vetted yet.");
+                }
+                else if (existingUser.Passed == true)
+                {
+                    return Content("User has already passed the vetting process.");
+                }
+                else
+                {
+                    return Content("User has been vetted and did not pass.");
+                }
             }
-            else if (existingUser.Vetted == false)
+            catch (Exception ex)
             {
-                return Content("Proceed: User exitsts, but has not been vetted yet.");
-            }
-            else if (existingUser.Passed == true)
-            {
-                return Content("User has already passed the vetting process.");
-            }
-            else
-            {
-                return Content("User has been vetted and did not pass.");
+                Console.WriteLine(ex.Message);
+                return Content(ex.Message);
             }
         }
-
-
 
         private void PopulateQuestionsModel()
         {
@@ -151,6 +149,7 @@ namespace HCP_UserVetting.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 throw;
             }
         }

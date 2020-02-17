@@ -186,3 +186,50 @@ BEGIN
     )
 END
 GO
+
+
+--Rule: If they are an influencer and there is no committee (Question 1) they should fail.
+--Condition: They are an influencer (Question 2B)
+IF NOT EXISTS (SELECT * FROM [dbo].[RuleConditions] 
+    WHERE [RuleId] = (SELECT [RuleId] FROM [dbo].[Rules] WHERE [RuleDescription] = 'If they are an influencer and there is no committee (Question 1) they should fail.')
+        AND [QuestionId] = (SELECT [QuestionId] FROM [dbo].[Questions] WHERE [QuestionNumber] = 2 and [SubQuestionNumber] = 2))
+BEGIN
+    INSERT INTO [dbo].[RuleConditions]
+    (
+        [RuleId],
+        [QuestionId],
+        [ExpectedResult],
+        [IsActive]
+    )
+    VALUES 
+    (
+        (SELECT [RuleId] FROM [dbo].[Rules] WHERE [RuleDescription] = 'If they are an influencer and there is no committee (Question 1) they should fail.'),
+        (SELECT [QuestionId] FROM [dbo].[Questions] WHERE [QuestionNumber] = 2 and [SubQuestionNumber] = 2),
+        'YES',
+        1
+    )
+END
+GO
+
+--Rule: If they are an influencer and there is no committee (Question 1) they should fail.
+--Condition: There is no committee (Question 1A)
+IF NOT EXISTS (SELECT * FROM [dbo].[RuleConditions] 
+    WHERE [RuleId] = (SELECT [RuleId] FROM [dbo].[Rules] WHERE [RuleDescription] = 'If they are an influencer and there is no committee (Question 1) they should fail.')
+        AND [QuestionId] = (SELECT [QuestionId] FROM [dbo].[Questions] WHERE [QuestionNumber] = 1 and [SubQuestionNumber] = 1))
+BEGIN
+    INSERT INTO [dbo].[RuleConditions]
+    (
+        [RuleId],
+        [QuestionId],
+        [ExpectedResult],
+        [IsActive]
+    )
+    VALUES 
+    (
+        (SELECT [RuleId] FROM [dbo].[Rules] WHERE [RuleDescription] = 'If they are an influencer and there is no committee (Question 1) they should fail.'),
+        (SELECT [QuestionId] FROM [dbo].[Questions] WHERE [QuestionNumber] = 1 and [SubQuestionNumber] = 1),
+        'NO',
+        1
+    )
+END
+GO
