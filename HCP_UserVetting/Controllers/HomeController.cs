@@ -5,6 +5,7 @@ using HCP_UserVetting.Data.Models;
 using HCP_UserVetting.Logic;
 using HCP_UserVetting.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Json;
 
 namespace HCP_UserVetting.Controllers
 {
@@ -12,8 +13,7 @@ namespace HCP_UserVetting.Controllers
     {
         private Data.HCP_DBContext _dbContext;
 
-        private VettingModel _model;
-
+        private User _user;
         private List<QuestionModel> _questions = new List<QuestionModel>();
         private RulesEngine _rulesEngine;
 
@@ -29,33 +29,29 @@ namespace HCP_UserVetting.Controllers
 
             _questions = new List<QuestionModel>();
 
-            _model = new VettingModel()
-            {
-                Questions = _questions,
-                User = new User()
-            };
+            _user = new User();
         }
 
         public ActionResult Index()
         {
-            return View(_model);
+            return View(_user);
         }
 
 
         [Route("Questions")]
-        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
         public ActionResult Questions()
         {
             PopulateQuestionsModel();
             return Json(_questions);
         }
 
-        [Route("User/VetUser")]
+        [Route("User/SubmitUser")]
         [HttpPost]
-        public ActionResult VetUser(QuestionModel model)
+        public ActionResult SubmitUser(List<QuestionModel> vetting)
         {
             //Save results
-
+            string test = string.Empty;
+            var test2 = vetting;
 
             //run Rule Engine
 
@@ -63,7 +59,7 @@ namespace HCP_UserVetting.Controllers
             //Share results
 
 
-            return View();
+            return Content(test);
         }
 
         [Route("User/CheckUser")]

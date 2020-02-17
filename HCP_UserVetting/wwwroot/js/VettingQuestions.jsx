@@ -66,10 +66,12 @@ class VettingBox extends React.Component {
 
     handleQuestionsSubmit = questions => {
         this.setState({ questions: questions });
+
         let data = new FormData();
-        data.append('questions', questions);
+        let str = JSON.stringify(questions);
         let request = new XMLHttpRequest();
         request.open('post', this.props.submitUrl, true);
+        request.setRequestHeader("Content-Type", "application/json");
         request.onload = function () {
             let result = request.responseText;
             this.setState({ userVettingResultText: result });
@@ -79,7 +81,7 @@ class VettingBox extends React.Component {
             this.setState({ showVettingResult: true });
             this.setState({ showRestart: true });
         }.bind(this);
-        request.send(data);
+        request.send(str);
     };
 
     //componentDidMount() {
@@ -287,6 +289,9 @@ class QuestionsForm extends React.Component {
                 if (parentQuestion != null && parentQuestion.answer === question.parentAnswerValue) {
                     question.isVisible = true;
                 }
+                else {
+                    question.isVisible = false;
+                }
             }
 
             for (let i = 0; i < this.state.questions.length; i++) {
@@ -314,7 +319,7 @@ class QuestionsForm extends React.Component {
         return (
             <div>
                 <br />
-                <form id="userForm" onSubmit={this.handleSubmit}>
+                <form id="userForm" onSubmit={this.handleAnswersSubmit}>
                     <div className="card card-5">
                         <div className="card-heading">
                             <h2 className="title">Vetting Questions</h2>
@@ -380,7 +385,7 @@ class Question extends React.Component {
         else { //if (this.state.Freeform == false && this.state.options[0].optionType == "DROPDOWN") {
             return (
                 <div className="form-row">
-                    <div className="name">{this.state.question.subQuestionNumber == 1 ? this.state.question.questionNumber : ''}</div>
+                    <div className="name">{this.state.question.subQuestionNumber == 1 ? 'Question ' + this.state.question.questionNumber : ''}</div>
                     <div className="value">
                         <div className="form-group">
                             <label>{this.state.question.questionText}</label>
@@ -453,9 +458,78 @@ function createRemarkable() {
 }
 
 class VettingResult extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            firstName: props.firstName,
+            lastName: props.lastName,
+            emailAddress: props.emailAddress,
+            resultText: props.resultText
+        };
+    }
+
     render() {
         return (
-            <div></div>
+            <div className="card card-5">
+                <div className="card-heading">
+                    <h2 className="title">Provider Vetting Result</h2>
+                </div>
+                <div className="card-body">
+                    <div className="form-row">
+                        <div className="name">First Name</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="firstName"
+                                    type="text"
+                                    value={this.state.firstName}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Last Name</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="lastName"
+                                    type="text"
+                                    value={this.state.lastName}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Email Address</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="emailAddress"
+                                    type="email"
+                                    value={this.state.emailAddress}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Vetting Result</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <h4><i>{this.state.resultText}</i></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
     }
 }
@@ -562,7 +636,7 @@ class UserCheckResult extends React.Component {
                         <div className="name">Provider Check Result</div>
                         <div className="value">
                             <div className="form-group">
-                                <h4>{this.state.resultText}</h4>
+                                <h4><i>{this.state.resultText}</i></h4>
                             </div>
                         </div>
                     </div>

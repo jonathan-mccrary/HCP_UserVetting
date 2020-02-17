@@ -1,4 +1,4 @@
-﻿@model HCP_UserVetting.Models.VettingModel
+﻿@model HCP_UserVetting.Data.Models.User
 @{
     Layout = "_Layout";
 }
@@ -11,10 +11,10 @@
 <div id="divIndex">
     @Html.React("VettingBox", new
     {
-        initialData = Model.User,
+        initialData = Model,
         checkUserUrl = Url.Action("CheckUser"),
         questionsUrl = Url.Action("Questions"),
-        submitUrl = Url.Action("VetUser"),
+        submitUrl = Url.Action("SubmitUser"),
         pollInterval = 2000,
     })
     <script src="@Url.Content("~/js/VettingQuestions.jsx")"></script>
