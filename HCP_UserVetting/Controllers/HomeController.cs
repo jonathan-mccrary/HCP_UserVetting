@@ -6,6 +6,7 @@ using HCP_UserVetting.Logic;
 using HCP_UserVetting.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Json;
+using Newtonsoft.Json.Linq;
 
 namespace HCP_UserVetting.Controllers
 {
@@ -45,27 +46,58 @@ namespace HCP_UserVetting.Controllers
             return Json(_questions);
         }
 
-        [Route("User/SubmitUser")]
+        [Route("Questions/SubmitQuestions")]
         [HttpPost]
-        public ActionResult SubmitUser(List<QuestionModel> vetting)
+        public ActionResult SubmitQuestions(VettingModel model)
         {
-            //Save results
-            string test = string.Empty;
-            var test2 = vetting;
+            try
+            {
+                /**/
+                if (model != null && model.Questions != null)
+                {
+                    User existingUser = _dbContext.Users.FirstOrDefault(p => p.FirstName == model.User.FirstName && p.LastName == model.User.LastName && p.EmailAddress == model.User.EmailAddress);
+                    //Save results
+                    foreach (var result in model.Questions)
+                    {
+                        if (!string.IsNullOrEmpty(result.Answer))
+                        {
+                            MAP_User_Question_Response response = new MAP_User_Question_Response()
+                            {
+                                QuestionId = result.QuestionId,
+                                Response = result.Answer,
+                                UserId = existingUser.UserId
+                            };
+                            _dbContext.QuestionResponses.Add(response);
+                            _dbContext.SaveChanges();
+                        }
+                    }
 
-            //run Rule Engine
+                    //run Rule Engine
+                    var pass = _rulesEngine.RunRulesEngineOnUser(existingUser.UserId);
 
-
-            //Share results
-
-
-            return Content(test);
+                    //Share results
+                    if (pass)
+                    {
+                        return Content("Provider passed vetting process.");
+                    }
+                    else
+                    {
+                        return Content("Provider failed vetting process.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            return Content("No results because something went wrong.");
         }
 
         [Route("User/CheckUser")]
         [HttpPost]
         public ActionResult CheckUser(User user)
         {
+            _user = user;
             User existingUser = _dbContext.Users.FirstOrDefault(p => p.FirstName == user.FirstName && p.LastName == user.LastName && p.EmailAddress == user.EmailAddress);
 
             if (existingUser == null)

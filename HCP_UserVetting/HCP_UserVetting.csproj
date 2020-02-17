@@ -24,6 +24,7 @@
     <Content Remove="appsettings.Development.json" />
     <Content Remove="appsettings.json" />
     <Content Remove="wwwroot\css\site.css" />
+    <Content Remove="wwwroot\js\Tutorial.jsx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JavaScriptEngineSwitcher.Core" Version="3.3.0" />
@@ -59,5 +60,6 @@
     <Compile Remove="Models\CommentModel.cs" />
     <Compile Remove="Models\AnswerModel.cs" />
     <Compile Remove="Models\UserQuestionModel.cs" />
+    <Compile Remove="Models\UserModel.cs" />
   </ItemGroup>
 </Project>

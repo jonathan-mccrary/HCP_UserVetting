@@ -67,21 +67,29 @@ class VettingBox extends React.Component {
     handleQuestionsSubmit = questions => {
         this.setState({ questions: questions });
 
-        let data = new FormData();
-        let str = JSON.stringify(questions);
-        let request = new XMLHttpRequest();
-        request.open('post', this.props.submitUrl, true);
-        request.setRequestHeader("Content-Type", "application/json");
-        request.onload = function () {
-            let result = request.responseText;
+        $.ajax({
+            url: this.props.submitUrl,
+            type: 'POST',
+            data: {
+                model: {
+                    user: this.state.userInfo,
+                    questions: questions
+                }
+            },
+            ContentType: 'application/json;utf-8',
+            datatype: 'json'
+        }).done((responseText) => {
+            //alert("Successful " + responseText);
+            let result = responseText;
             this.setState({ userVettingResultText: result });
             this.setState({ showUserForm: false });
             this.setState({ showUserCheckResults: false });
             this.setState({ showQuestions: false });
             this.setState({ showVettingResult: true });
             this.setState({ showRestart: true });
-        }.bind(this);
-        request.send(str);
+        }).error((err) => {
+            alert("Error " + err.status);
+        });
     };
 
     //componentDidMount() {

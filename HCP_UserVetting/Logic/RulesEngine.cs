@@ -15,32 +15,35 @@ namespace HCP_UserVetting.Logic
 
         public bool RunRulesEngineOnUser(long userId)
         {
-            bool retVal = true;
+            bool passed = true;
             var user = _dbContext.Users.FirstOrDefault(p => p.UserId == userId);
             var questionResponses = this.GetUserQuestionResponses(userId);
             var rules = GetRules();
-            List<RuleCondition> conditions = new List<RuleCondition>();
             foreach (var rule in rules)
             {
                 rule.Conditions = this.GetRuleConditionsForRule(rule.RuleId);
-                conditions.AddRange(rule.Conditions);
-            }
-
-            foreach (var condition in conditions)
-            {
-                var result = questionResponses.FirstOrDefault(p => p.QuestionId == condition.QuestionId);
-                if (result == null || (condition.ExpectedResult == result.Response))
+                if (rule.Conditions == null || rule.Conditions.Count == 0)
                 {
-                    retVal = false;
+                    continue;
+                }
+                List<bool> results = new List<bool>();
+                foreach (var condition in rule.Conditions)
+                {
+                    var answer = questionResponses.FirstOrDefault(p => p.QuestionId == condition.QuestionId);
+                    results.Add(answer == null || (condition.ExpectedResult == answer.Response));
+                }
+                passed = results.Contains(false);
+                if (passed == false)
+                {
                     break;
                 }
             }
 
-            user.Vetted = retVal;
-            user.Passed = retVal;
+            user.Vetted = true;
+            user.Passed = passed;
             _dbContext.SaveChanges();
 
-            return retVal;
+            return passed;
         }
 
         private List<MAP_User_Question_Response> GetUserQuestionResponses(long userId)
