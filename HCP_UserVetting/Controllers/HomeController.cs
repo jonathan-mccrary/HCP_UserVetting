@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using HCP_UserVetting.Data.Models;
 using HCP_UserVetting.Logic;
@@ -12,9 +13,8 @@ namespace HCP_UserVetting.Controllers
         private Data.HCP_DBContext _dbContext;
 
         private VettingModel _model;
-        private User _user;
 
-        private IList<Question> _questions = new List<Question>();
+        private List<QuestionModel> _questions = new List<QuestionModel>();
         private RulesEngine _rulesEngine;
 
         public HomeController(Data.HCP_DBContext dBContext)
@@ -27,13 +27,12 @@ namespace HCP_UserVetting.Controllers
              *  Once user is submitted, load questions from database/in memory (like in the Comments() action method)
              */
 
-            _user = new User();
-            _questions = new List<Question>();
+            _questions = new List<QuestionModel>();
 
             _model = new VettingModel()
             {
                 Questions = _questions,
-                User = _user
+                User = new User()
             };
         }
 
@@ -53,8 +52,17 @@ namespace HCP_UserVetting.Controllers
 
         [Route("User/VetUser")]
         [HttpPost]
-        public ActionResult VetUser(VettingModel model)
+        public ActionResult VetUser(QuestionModel model)
         {
+            //Save results
+
+
+            //run Rule Engine
+
+
+            //Share results
+
+
             return View();
         }
 
@@ -68,11 +76,11 @@ namespace HCP_UserVetting.Controllers
             {
                 _dbContext.Users.Add(user);
                 _dbContext.SaveChanges();
-                return Content("Proceed: User does not exist and has not been vetted yet");
+                return Content("Proceed: User does not exist and has not been vetted yet.");
             }
             else if (existingUser.Vetted == false)
             {
-                return Content("Proceed: User exitsts, but has not been vetted yet");
+                return Content("Proceed: User exitsts, but has not been vetted yet.");
             }
             else if (existingUser.Passed == true)
             {
@@ -84,45 +92,39 @@ namespace HCP_UserVetting.Controllers
             }
         }
 
+
+
         private void PopulateQuestionsModel()
         {
-            Question questionOneA = new Question()
+            try
             {
-                QuestionId = 0,
-                QuestionNumber = 1,
-                SubQuestionNumber = 1,
-                QuestionText = "",
-                FreeForm = false,
-                IsActive = true
-            };
-            AnswerOption optionOne = new AnswerOption()
+                _questions = _dbContext.Questions.Where(p => p.IsActive == true)?.Select(p => new QuestionModel()
+                {
+                    Answer = string.Empty,
+                    FreeForm = p.FreeForm,
+                    IsActive = p.IsActive,
+                    ParentAnswerValue = p.ParentAnswerValue,
+                    ParentQuestionId = p.ParentQuestionId,
+                    QuestionId = p.QuestionId,
+                    QuestionNumber = p.QuestionNumber,
+                    QuestionText = p.QuestionText,
+                    SubQuestionNumber = p.SubQuestionNumber
+                })?.ToList();
+                foreach (var question in _questions)
+                {
+                    if (question.FreeForm == false)
+                    {
+                        question.Options = (from ao in _dbContext.AnswerOptions
+                                            join mqo in _dbContext.QuestionOptions on ao.OptionId equals mqo.OptionId
+                                            where mqo.QuestionId == question.QuestionId
+                                            select ao).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                OptionId = 0,
-                OptionType = "YESNO",
-                OptionValue = "YES"
-            };
-            AnswerOption optionTwo = new AnswerOption()
-            {
-                OptionId = 1,
-                OptionType = "YESNO",
-                OptionValue = "NO"
-            };
-            questionOneA.Options.Add(optionOne);
-            questionOneA.Options.Add(optionTwo);
-            _questions.Add(questionOneA);
-
-            //var activeQuestions = _dbContext.Questions.Where(p => p.IsActive == true).OrderBy(p => p.QuestionNumber);
-            //foreach (var question in activeQuestions)
-            //{
-            //    if (question.FreeForm == false)
-            //    {
-            //        var options = (from ao in _dbContext.AnswerOptions
-            //                       join mqo in _dbContext.QuestionOptions on ao.OptionId equals mqo.OptionId
-            //                       where mqo.QuestionId == question.QuestionId
-            //                       select ao).ToList();
-            //        question.Options = options;
-            //    }
-            //}
+                throw;
+            }
         }
     }
 }

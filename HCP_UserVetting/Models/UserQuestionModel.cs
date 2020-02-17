@@ -13,6 +13,5 @@ namespace HCP_UserVetting.Models
 
         public UserModel User { get; set; }
         public QuestionModel Question { get; set; }
-        public AnswerModel Answer { get; set; }
     }
 }

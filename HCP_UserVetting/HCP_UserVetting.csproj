@@ -56,5 +56,7 @@
     <Compile Remove="Data\Models\MAP_WebUser_Question.cs" />
     <Compile Remove="Data\Models\MAP_WebUser_Question.cs" />
     <Compile Remove="Models\CommentModel.cs" />
+    <Compile Remove="Models\AnswerModel.cs" />
+    <Compile Remove="Models\UserQuestionModel.cs" />
   </ItemGroup>
 </Project>

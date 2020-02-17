@@ -27,11 +27,12 @@ class VettingBox extends React.Component {
     };
 
     loadQuestionsFromServer = () => {
-        var request = new XMLHttpRequest();
+        let request = new XMLHttpRequest();
         request.open('get', this.props.questionsUrl, true);
         request.onload = function () {
-            var result = JSON.parse(request.responseText);
+            let result = JSON.parse(request.responseText);
             this.setState({ questions: result });
+            this.setState({ showQuestions: true });
         }.bind(this);
         request.send();
     }
@@ -39,15 +40,15 @@ class VettingBox extends React.Component {
     handleUserSubmit = user => {
         this.setState({ userInfo: user });
 
-        var data = new FormData();
+        let data = new FormData();
         data.append('firstName', user.firstName);
         data.append('lastName', user.lastName);
         data.append('emailAddress', user.emailAddress);
 
-        var request = new XMLHttpRequest();
+        let request = new XMLHttpRequest();
         request.open('post', this.props.checkUserUrl, true);
         request.onload = function () {
-            var result = request.responseText;
+            let result = request.responseText;
             this.setState({ userCheckResultText: result });
             this.setState({ showUserForm: false });
             this.setState({ showUserCheckResults: true });
@@ -63,11 +64,23 @@ class VettingBox extends React.Component {
         this.setState({ userInfo: initialUserInfo });
     }
 
-    //handleQuestionsSubmit = questions => {
-    //    //this.setState({ question: questions });
-    //    //var data = new FormData();
-
-    //};
+    handleQuestionsSubmit = questions => {
+        this.setState({ questions: questions });
+        let data = new FormData();
+        data.append('questions', questions);
+        let request = new XMLHttpRequest();
+        request.open('post', this.props.submitUrl, true);
+        request.onload = function () {
+            let result = request.responseText;
+            this.setState({ userVettingResultText: result });
+            this.setState({ showUserForm: false });
+            this.setState({ showUserCheckResults: false });
+            this.setState({ showQuestions: false });
+            this.setState({ showVettingResult: true });
+            this.setState({ showRestart: true });
+        }.bind(this);
+        request.send(data);
+    };
 
     //componentDidMount() {
     //    window.setInterval(this.loadQuestionsFromServer, this.props.pollInterval);
@@ -98,14 +111,21 @@ class VettingBox extends React.Component {
                 <div className="questionsForm">
                     {
                         this.state.showQuestions
-                            ? <QuestionsForm />
+                            ? <QuestionsForm
+                                questions={this.state.questions}
+                                onQuestionsSubmit={this.handleQuestionsSubmit}
+                            />
                             : null
                     }
                 </div>
                 <div className="vettingResult">
                     {
                         this.state.showVettingResult
-                            ? <VettingResult />
+                            ? <VettingResult
+                                firstName={this.state.userInfo.firstName}
+                                lastName={this.state.userInfo.lastName}
+                                emailAddress={this.state.userInfo.emailAddress}
+                                resultText={this.state.userVettingResultText} />
                             : null
                     }
                 </div>
@@ -135,9 +155,9 @@ class UserForm extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        var firstName = this.state.firstName.trim();
-        var lastName = this.state.lastName.trim();
-        var emailAddress = this.state.emailAddress.trim();
+        let firstName = this.state.firstName.trim();
+        let lastName = this.state.lastName.trim();
+        let emailAddress = this.state.emailAddress.trim();
         //alert('A name was submitted: ' + firstName + ' ' + lastName);
 
         if (!firstName || !lastName || !emailAddress) {
@@ -164,15 +184,15 @@ class UserForm extends React.Component {
             <form id="userForm" onSubmit={this.handleSubmit}>
                 <div className="card card-5">
                     <div className="card-heading">
-                        <h2 className="title">User Vetting</h2>
+                        <h2 className="title">Provider Vetting</h2>
                     </div>
                     <div className="card-body">
                         <div className="form-row">
                             <div className="name">First Name</div>
                             <div className="value">
-                                <div className="form-group input-group">
+                                <div className="form-group">
                                     <input
-                                        className="form-control input--style-5"
+                                        className="form-control"
                                         id="firstName"
                                         type="text"
                                         value={this.state.firstName}
@@ -185,9 +205,9 @@ class UserForm extends React.Component {
                         <div className="form-row">
                             <div className="name">Last Name</div>
                             <div className="value">
-                                <div className="form-group input-group">
+                                <div className="form-group">
                                     <input
-                                        className="form-control input--style-5"
+                                        className="form-control"
                                         id="lastName"
                                         type="text"
                                         value={this.state.lastName}
@@ -200,9 +220,9 @@ class UserForm extends React.Component {
                         <div className="form-row">
                             <div className="name">Email Address</div>
                             <div className="value">
-                                <div className="form-group input-group">
+                                <div className="form-group">
                                     <input
-                                        className="form-control input--style-5"
+                                        className="form-control"
                                         id="emailAddress"
                                         type="email"
                                         value={this.state.emailAddress}
@@ -219,89 +239,217 @@ class UserForm extends React.Component {
     }
 }
 
-class UserCheckResult extends React.Component {
+class QuestionsForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            firstName: props.firstName,
-            lastName: props.lastName,
-            emailAddress: props.emailAddress,
-            resultText: props.resultText
+            questions: props.questions,
+            onQuestionsSubmit: props.onQuestionsSubmit
         };
     }
 
+    handleAnswersSubmit = (e) => {
+        e.preventDefault();
+        this.props.onQuestionsSubmit(this.state.questions);
+    }
+
+    handleAnswerChange = question => {
+        var qs = this.state.questions;
+        let index = -1;
+        for (let i = 0; i < qs.length; i++) {
+            if (qs[i].questionId == question.questionId) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
+            qs[index] = question;
+        }
+
+        this.setState({ questions: qs });
+    };
+
     render() {
+        let showButton = true;
+        let questionNodes = this.state.questions.map((question) => {
+            if (question.parentQuestionId == null) {
+                question.isVisible = true;
+            }
+            else {
+                let parentQuestion = null;
+                for (let i = 0; i < this.state.questions.length; i++) {
+                    if (question.parentQuestionId == this.state.questions[i].questionId) {
+                        parentQuestion = this.state.questions[i];
+                        break;
+                    }
+                }
+
+                if (parentQuestion != null && parentQuestion.answer === question.parentAnswerValue) {
+                    question.isVisible = true;
+                }
+            }
+
+            for (let i = 0; i < this.state.questions.length; i++) {
+                if (this.state.questions[i].isVisible === true && this.state.questions[i].answer === "") {
+                    showButton = false;
+                    break;
+                }
+            }
+
+            return (
+                <div>
+                    {
+                        question.isVisible
+                            ? <Question
+                                key={question.questionId}
+                                question={question}
+                                onAnswerChange={this.handleAnswerChange}
+                            />
+                            : null
+                    }
+                </div>
+            );
+        });
+
         return (
-            <div className="card card-5">
-                <div className="card-heading">
-                    <h2 className="title">User Vetting Result</h2>
+            <div>
+                <br />
+                <form id="userForm" onSubmit={this.handleSubmit}>
+                    <div className="card card-5">
+                        <div className="card-heading">
+                            <h2 className="title">Vetting Questions</h2>
+                        </div>
+                        <div className="card-body">
+                            <div className="questionList">{questionNodes}</div>
+                            {
+                                showButton === true
+                                    ? <input id="btnSubmitQuestions" className="btn btn-primary" type="submit" value="Submit" />
+                                    : null
+                            }
+                        </div>
+                    </div>
+                </form>
+            </div>);
+        ;
+    }
+}
+
+class Question extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            question: props.question,
+            onAnswerChange: props.onAnswerChange
+        };
+    }
+
+    handleFreeFormChange = e => {
+        this.state.question.answer = e.target.value;
+        this.props.onAnswerChange(this.state.question);
+    }
+
+    handleAnswerChange = question => {
+        this.props.onAnswerChange(question);
+    }
+
+    render() {
+        //let questionNumber = this.state.question.questionNumber + '.' + this.state.question.subQuestionNumber;
+
+        let inputId = 'input_' + this.state.question.questionId + '_' + this.state.question.questionNumber + '_' + this.state.question.subQuestionNumber;
+        if (this.state.question.freeForm) {
+            return (
+                <div className="form-row">
+
+                    <div className="name">{this.state.question.subQuestionNumber == 1 ? this.state.question.questionNumber : ''}</div>
+                    <div className="value">
+                        <div className="form-group">
+                            <label>{this.state.question.questionText}</label>
+                            <br />
+                            <input
+                                id={inputId}
+                                key={this.state.question.questionId}
+                                className="form-control"
+                                type="text"
+                                value={this.state.question.answer}
+                                onChange={this.handleFreeFormChange} />
+                        </div>
+                    </div>
                 </div>
-                <div className="card-body">
-                    <div className="form-row">
-                        <div className="name">First Name</div>
-                        <div className="value">
-                            <div className="form-group input-group">
-                                <input
-                                    disabled
-                                    className="form-control input--style-5"
-                                    id="firstName"
-                                    type="text"
-                                    value={this.state.firstName}
-                                />
-                            </div>
+            );
+        }
+        else { //if (this.state.Freeform == false && this.state.options[0].optionType == "DROPDOWN") {
+            return (
+                <div className="form-row">
+                    <div className="name">{this.state.question.subQuestionNumber == 1 ? this.state.question.questionNumber : ''}</div>
+                    <div className="value">
+                        <div className="form-group">
+                            <label>{this.state.question.questionText}</label>
+                            <br />
+                            <Dropdown
+                                id={inputId}
+                                key={this.state.question.questionId}
+                                question={this.state.question}
+                                onAnswerChange={this.handleAnswerChange}
+                            />
                         </div>
                     </div>
+                </div >
+            );
+        }
 
-                    <div className="form-row">
-                        <div className="name">Last Name</div>
-                        <div className="value">
-                            <div className="form-group input-group">
-                                <input
-                                    disabled
-                                    className="form-control input--style-5"
-                                    id="lastName"
-                                    type="text"
-                                    value={this.state.lastName}
-                                />
-                            </div>
-                        </div>
-                    </div>
+    }
+}
 
-                    <div className="form-row">
-                        <div className="name">Email Address</div>
-                        <div className="value">
-                            <div className="form-group input-group">
-                                <input
-                                    disabled
-                                    className="form-control input--style-5"
-                                    id="emailAddress"
-                                    type="email"
-                                    value={this.state.emailAddress}
-                                />
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="form-row">
-                        <div className="name">User Check Result</div>
-                        <div className="value">
-                            <div className="form-group input-group">
-                                <span>{this.state.resultText}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+class Dropdown extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            id: props.id,
+            question: props.question,
+            onAnswerChange: props.onChange
+        };
+    }
+
+    handleDropdownChange = e => {
+        this.state.question.answer = e.target.value;
+        this.props.onAnswerChange(this.state.question);
+    }
+
+    render() {
+        let ddlOptions = this.state.question.options.map(function (ddlOption) {
+            return (
+                <option
+                    key={ddlOption.optionId}
+                    value={ddlOption.optionValue}>{ddlOption.optionValue}
+                </option>
+            );
+        });
+        return (
+            <select
+                className="form-control"
+                id={this.state.id}
+                onChange={this.handleDropdownChange}
+                defaultValue="">
+                <option
+                    key="-1"
+                    value="">
+                    Select Option
+                </option >
+                {ddlOptions}
+            </select >
         );
     }
 }
 
-class QuestionsForm extends React.Component {
-    render() {
-        return (
-            <div></div>
-        );
-    }
+
+function createRemarkable() {
+    var remarkable =
+        'undefined' != typeof global && global.Remarkable
+            ? global.Remarkable
+            : window.Remarkable;
+
+    return new remarkable();
 }
 
 class VettingResult extends React.Component {
@@ -330,110 +478,96 @@ class Restart extends React.Component {
 
     render() {
         return (
-            <form id="restartForm" onSubmit={this.handleSubmit}>
-                <div className="card card-5">
-                    <div className="card-heading">
-                        <h2 className="title">Restart?</h2>
+            <div>
+                <br />
+                <form id="restartForm" onSubmit={this.handleSubmit}>
+                    <div className="card card-5">
+                        <div className="card-heading">
+                            <h2 className="title">Restart?</h2>
+                        </div>
+                        <div className="card-body">
+                            <input id="btnRestart" className="btn btn-primary" type="submit" value="Restart Form" />
+                        </div>
                     </div>
-                    <div className="card-body">
-                        <input id="btnRestart" className="btn btn-primary" type="submit" value="Restart Form" />
-                    </div>
-                </div>
-            </form>
-        );
-    }
-}
-
-//class QuestionList extends React.Component {
-//    render() {
-//        var questionNodes = this.prop.data.Questions.map(function (question) {
-//            return (
-//                //Figure out how to handle the options here
-//                <Question key={question.QuestionId}>
-//                    {question.QuestionText}
-//                </Question>
-//            );
-//        });
-//    }
-//}
-
-
-
-
-
-//class UserResult extends React.Component {
-//    render() {
-//        return (
-//            <div>
-//            </div>
-//        );
-//    }
-//}
-
-class Question extends React.Component {
-    //
-    //Props
-    //Question Text
-    //Question Type = Free Form or Dropdown (if time permits, add radio button and checkbox)
-    //Options
-    //
-
-
-    render() {
-        var input;
-        if (this.props.Freeform) {
-
-            input = <input
-                className="form-control input--style-5"
-                id="lastName"
-                type="text"
-                value={this.state.lastName}
-                onChange={this.handleUserLastNameChange} />
-        }
-        else if (this.props.Freeform == false && this.props.AnswerOptions[0].OptionType == "DROPDOWN") {
-            input = <Dropdown questionId={this.props.QuestionId}
-                options={this.props.options}
-                onDropdownChange={this.props.onDropdownChange} />
-        }
-        return (
-            <div className="form-row">
-                <div className="name">{this.props.QuestionText}                                                                         </div>
-                <div className="value">
-                    <div className="form-group input-group">
-                        {input}
-                    </div>
-                </div>
+                </form>
             </div>
         );
     }
 }
 
-
-class Dropdown extends React.Component {
+class UserCheckResult extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            firstName: props.firstName,
+            lastName: props.lastName,
+            emailAddress: props.emailAddress,
+            resultText: props.resultText
+        };
+    }
 
     render() {
-        var ddlId = "ddl" + this.props.questionId;
-        var ddlOptions = this.props.options.map(function (ddlOption) {
-            return (
-                <option value={ddlOption.Value}>{ddlOption.Value}</option>
-            );
-        });
         return (
-            <select className="form-control input--style-5"
-                id={ddlId}
-                onChange={this.props.onDropdownChange}>
-                {ddlOptions}
-            </select >
+            <div className="card card-5">
+                <div className="card-heading">
+                    <h2 className="title">Provider Check Result</h2>
+                </div>
+                <div className="card-body">
+                    <div className="form-row">
+                        <div className="name">First Name</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="firstName"
+                                    type="text"
+                                    value={this.state.firstName}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Last Name</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="lastName"
+                                    type="text"
+                                    value={this.state.lastName}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Email Address</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <input
+                                    disabled
+                                    className="form-control"
+                                    id="emailAddress"
+                                    type="email"
+                                    value={this.state.emailAddress}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="name">Provider Check Result</div>
+                        <div className="value">
+                            <div className="form-group">
+                                <h4>{this.state.resultText}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
     }
-}
-
-
-function createRemarkable() {
-    var remarkable =
-        'undefined' != typeof global && global.Remarkable
-            ? global.Remarkable
-            : window.Remarkable;
-
-    return new remarkable();
 }

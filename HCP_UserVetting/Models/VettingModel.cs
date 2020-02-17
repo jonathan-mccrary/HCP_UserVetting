@@ -6,6 +6,6 @@ namespace HCP_UserVetting.Models
     public class VettingModel
     {
         public User User { get; set; }
-        public IList<Question> Questions { get; set; }
+        public IList<QuestionModel> Questions { get; set; }
     }
 }

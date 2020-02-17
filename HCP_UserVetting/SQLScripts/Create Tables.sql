@@ -29,7 +29,7 @@ BEGIN
         SubQuestionNumber int not null,
         FreeForm bit default 0 not null,
         ParentQuestionId bigint null,
-        ParenteAnswerValue VARCHAR(100) null,
+        ParentAnswerValue VARCHAR(100) null,
         IsActive bit default 1 not null,
         CONSTRAINT fk_Question_ParentQuestion FOREIGN Key (ParentQuestionId) REFERENCES Questions(QuestionId),
     );
